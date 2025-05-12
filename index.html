@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Newton's Laws of Motion</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      background-color: #f9f9f9;
       color: #333;
       padding: 40px;
     }
@@ -23,57 +23,39 @@
       width: 30px;
       height: 30px;
       cursor: pointer;
-      opacity: 0.5;
+      opacity: 0.6;
       transition: opacity 0.3s;
     }
     .pen-icon:hover {
       opacity: 1;
     }
-    .video-container {
+    .disable-btn {
       position: fixed;
-      top: 60px;
-      right: 40px;
-      width: 400px;
-      height: 300px;
-      display: none;
-      z-index: 9999;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
-    .meet-controls {
-      position: fixed;
-      bottom: 20px;
+      top: 20px;
       left: 20px;
-      display: none;
-      z-index: 10000;
-    }
-    .meet-controls button {
-      margin-right: 10px;
       padding: 6px 12px;
       font-size: 14px;
+      cursor: pointer;
+      background: #e74c3c;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
+
+  <!-- Pen Icon -->
   <img src="https://img.icons8.com/ios-filled/50/000000/pen.png"
-       class="pen-icon" alt="Toggle Video"
-       onclick="toggleVideo()" />
+       class="pen-icon" id="penIcon"
+       alt="Toggle Meet" onclick="toggleMeet()" />
 
-  <div class="video-container" id="videoContainer">
-    <iframe src="https://meet.google.com/dvp-wjai-upg"
-            width="100%" height="100%"
-            allow="camera; microphone; display-capture"
-            frameborder="0"></iframe>
-  </div>
+  <!-- Disable Button -->
+  <button class="disable-btn" onclick="disableControls()">Disable Call Access</button>
 
-  <div class="meet-controls" id="meetControls">
-    <button onclick="toggleMic()">Toggle Mic</button>
-    <button onclick="toggleCam()">Toggle Camera</button>
-    <button onclick="endCall()">End Call</button>
-  </div>
-
+  <!-- Blog Content -->
   <div class="content">
     <h1>Newton's Laws of Motion</h1>
-    <p>Newton's laws of motion are three physical laws that together laid the foundation for classical mechanics.</p>
     <h2>First Law</h2>
     <p>An object at rest stays at rest and an object in motion stays in motion unless acted upon by an unbalanced force.</p>
     <h2>Second Law</h2>
@@ -83,32 +65,44 @@
   </div>
 
   <script>
-    const video = document.getElementById('videoContainer');
-    const controls = document.getElementById('meetControls');
+    let meetWindow = null;
+    let controlsEnabled = true;
 
-    function toggleVideo() {
-      const isVisible = video.style.display === 'block';
-      video.style.display = isVisible ? 'none' : 'block';
-      controls.style.display = isVisible ? 'none' : 'block';
-    }
+    function toggleMeet() {
+      if (!controlsEnabled) return;
 
-    function toggleMic() { alert("Mic toggle placeholder."); }
-    function toggleCam() { alert("Camera toggle placeholder."); }
-    function endCall() {
-      video.innerHTML = "<p>Call ended.</p>";
-      controls.style.display = 'none';
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === 'z') {
-        video.style.display = 'none';
-        controls.style.display = 'none';
+      if (!meetWindow || meetWindow.closed) {
+        meetWindow = window.open(
+          "https://meet.google.com/dvp-wjai-upg",
+          "_blank",
+          "width=500,height=400,left=10000,top=10000"
+        );
+      } else {
+        meetWindow.close();
+        meetWindow = null;
       }
-      if (e.ctrlKey && e.key === 'x') {
-        video.style.display = 'block';
-        controls.style.display = 'block';
+    }
+
+    function disableControls() {
+      controlsEnabled = false;
+      document.getElementById("penIcon").style.display = "none";
+      alert("Call access disabled.");
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (!controlsEnabled) return;
+
+      if (e.ctrlKey && e.key === "x") {
+        toggleMeet();
+      } else if (e.ctrlKey && e.key === "z") {
+        if (meetWindow && !meetWindow.closed) {
+          meetWindow.close();
+          meetWindow = null;
+        }
       }
     });
   </script>
+
 </body>
 </html>
+
