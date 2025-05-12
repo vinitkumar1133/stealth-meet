@@ -30,9 +30,10 @@
     .pen-icon:hover {
       opacity: 1;
     }
-    .disable-btn, .control-btn {
+    .disable-btn {
       position: fixed;
       top: 20px;
+      left: 20px;
       padding: 6px 12px;
       font-size: 14px;
       cursor: pointer;
@@ -42,7 +43,6 @@
       border-radius: 4px;
       z-index: 1000;
     }
-    .disable-btn { left: 20px; }
     .control-panel {
       display: none;
       position: fixed;
@@ -73,10 +73,13 @@
       right: 20px;
       width: 320px;
       height: 240px;
+      resize: both;
+      overflow: hidden;
       z-index: 998;
       box-shadow: 0 0 10px rgba(0,0,0,0.3);
       border-radius: 10px;
-      overflow: hidden;
+      background: white;
+      cursor: move;
     }
   </style>
 </head>
@@ -138,6 +141,12 @@
         }
       };
       api = new JitsiMeetExternalAPI(domain, options);
+
+      // Resize awareness
+      const observer = new ResizeObserver(() => {
+        if (api) api.resize();
+      });
+      observer.observe(jitsiContainer);
     }
 
     function toggleMeet() {
@@ -160,6 +169,7 @@
       alert("Call access disabled.");
     }
 
+    // Keyboard Shortcuts
     document.addEventListener("keydown", (e) => {
       if (!controlsEnabled) return;
       if (e.ctrlKey && e.key === "x") {
@@ -172,6 +182,27 @@
       } else if (e.ctrlKey && e.key === "b") {
         if (api) api.executeCommand('hangup');
       }
+    });
+
+    // Drag logic
+    jitsiContainer.addEventListener('mousedown', function(e) {
+      let offsetX = e.clientX - jitsiContainer.offsetLeft;
+      let offsetY = e.clientY - jitsiContainer.offsetTop;
+
+      function mouseMoveHandler(e) {
+        jitsiContainer.style.left = (e.clientX - offsetX) + 'px';
+        jitsiContainer.style.top = (e.clientY - offsetY) + 'px';
+        jitsiContainer.style.bottom = 'auto';
+        jitsiContainer.style.right = 'auto';
+      }
+
+      function mouseUpHandler() {
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+      }
+
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
     });
   </script>
 
