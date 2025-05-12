@@ -8,7 +8,7 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
+      background-color: #f4f4f4;
       color: #333;
       padding: 40px;
     }
@@ -25,14 +25,14 @@
       cursor: pointer;
       opacity: 0.6;
       transition: opacity 0.3s;
+      z-index: 1000;
     }
     .pen-icon:hover {
       opacity: 1;
     }
-    .disable-btn {
+    .disable-btn, .control-btn {
       position: fixed;
       top: 20px;
-      left: 20px;
       padding: 6px 12px;
       font-size: 14px;
       cursor: pointer;
@@ -40,6 +40,43 @@
       color: #fff;
       border: none;
       border-radius: 4px;
+      z-index: 1000;
+    }
+    .disable-btn { left: 20px; }
+    .control-panel {
+      display: none;
+      position: fixed;
+      bottom: 270px;
+      right: 20px;
+      background: #222;
+      color: white;
+      padding: 8px;
+      border-radius: 8px;
+      z-index: 999;
+    }
+    .control-panel button {
+      margin: 0 4px;
+      padding: 6px 10px;
+      border: none;
+      background: #555;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .control-panel button:hover {
+      background: #777;
+    }
+    #jitsi-container {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 320px;
+      height: 240px;
+      z-index: 998;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      border-radius: 10px;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -53,6 +90,16 @@
   <!-- Disable Button -->
   <button class="disable-btn" onclick="disableControls()">Disable Call Access</button>
 
+  <!-- Control Panel -->
+  <div class="control-panel" id="controlPanel">
+    <button onclick="api.executeCommand('toggleAudio')">🎙️ Mic</button>
+    <button onclick="api.executeCommand('toggleVideo')">📷 Cam</button>
+    <button onclick="api.executeCommand('hangup')">❌ Leave</button>
+  </div>
+
+  <!-- Jitsi Meet Container -->
+  <div id="jitsi-container"></div>
+
   <!-- Blog Content -->
   <div class="content">
     <h1>Newton's Laws of Motion</h1>
@@ -64,45 +111,69 @@
     <p>For every action, there is an equal and opposite reaction.</p>
   </div>
 
+  <!-- Jitsi Meet API -->
+  <script src="https://meet.jit.si/external_api.js"></script>
   <script>
-    let meetWindow = null;
     let controlsEnabled = true;
+    let api = null;
+    const domain = "meet.jit.si";
+    const roomName = "bloodymarry";
+    const jitsiContainer = document.getElementById("jitsi-container");
+    const controlPanel = document.getElementById("controlPanel");
+
+    function startJitsi() {
+      if (api) return;
+
+      const options = {
+        roomName,
+        parentNode: jitsiContainer,
+        width: "100%",
+        height: "100%",
+        interfaceConfigOverwrite: {
+          TOOLBAR_BUTTONS: []
+        },
+        configOverwrite: {
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+        }
+      };
+      api = new JitsiMeetExternalAPI(domain, options);
+    }
 
     function toggleMeet() {
       if (!controlsEnabled) return;
-
-      if (!meetWindow || meetWindow.closed) {
-        meetWindow = window.open(
-          "https://meet.google.com/dvp-wjai-upg",
-          "_blank",
-          "width=500,height=400,left=10000,top=10000"
-        );
+      if (jitsiContainer.style.display === "none") {
+        jitsiContainer.style.display = "block";
+        controlPanel.style.display = "block";
+        startJitsi();
       } else {
-        meetWindow.close();
-        meetWindow = null;
+        jitsiContainer.style.display = "none";
+        controlPanel.style.display = "none";
       }
     }
 
     function disableControls() {
       controlsEnabled = false;
       document.getElementById("penIcon").style.display = "none";
+      jitsiContainer.style.display = "none";
+      controlPanel.style.display = "none";
       alert("Call access disabled.");
     }
 
     document.addEventListener("keydown", (e) => {
       if (!controlsEnabled) return;
-
       if (e.ctrlKey && e.key === "x") {
-        toggleMeet();
+        jitsiContainer.style.display = "block";
+        controlPanel.style.display = "block";
+        startJitsi();
       } else if (e.ctrlKey && e.key === "z") {
-        if (meetWindow && !meetWindow.closed) {
-          meetWindow.close();
-          meetWindow = null;
-        }
+        jitsiContainer.style.display = "none";
+        controlPanel.style.display = "none";
+      } else if (e.ctrlKey && e.key === "b") {
+        if (api) api.executeCommand('hangup');
       }
     });
   </script>
 
 </body>
 </html>
-
