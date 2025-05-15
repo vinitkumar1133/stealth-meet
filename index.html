@@ -33,11 +33,13 @@
       box-shadow: 0 0 12px #00ff88aa;
       z-index: 9999;
       overflow: hidden;
+      resize: both;
     }
     #meetContainer iframe {
       width: 100%;
       height: 100%;
       border: none;
+      pointer-events: auto;
     }
     #toggleIcon {
       cursor: pointer;
@@ -84,7 +86,7 @@
     const disableButton = document.getElementById('disableButton');
     let callDisabled = false;
 
-    // Load content from Firebase
+    // Load data from Firebase
     db.ref("siteData").once("value").then(snapshot => {
       const data = snapshot.val();
       blogContent.innerHTML += data?.blogContent || "<p>No blog content</p>";
@@ -121,3 +123,4 @@
   </script>
 </body>
 </html>
+
