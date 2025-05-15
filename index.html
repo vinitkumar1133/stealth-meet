@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Blog with Editable Content and Meeting</title>
+<title>Blog</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -18,78 +18,176 @@
     margin: auto;
     line-height: 1.5;
   }
-  #meetingFrame {
-    width: 100%;
-    height: 480px;
-    border: none;
+  #meetContainer {
+    display: none;
+    position: fixed;
+    top: 100px;
+    left: 100px;
+    width: 480px;
+    height: 320px;
+    border: 2px solid #555;
     border-radius: 8px;
-    box-shadow: 0 0 15px #00ff88;
-    margin-top: 30px;
+    background: #000;
+    box-shadow: 0 0 12px #00ff88aa;
+    z-index: 9999;
+    cursor: move;
+    overflow: hidden;
+  }
+  #meetContainer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    pointer-events: auto;
+  }
+  #disableButton {
+    cursor: pointer;
+    font-size: 24px;
+    float: right;
+    margin-bottom: 10px;
+    user-select: none;
+  }
+  #toggleIcon {
+    cursor: pointer;
+    font-size: 24px;
+    float: right;
+    margin-bottom: 10px;
+    user-select: none;
+    margin-right: 10px;
+  }
+  #resizeHandle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #00ff88;
+    bottom: 0;
+    right: 0;
+    cursor: se-resize;
+    border-top-left-radius: 8px;
   }
 </style>
 </head>
 <body>
-
-<div class="content" id="blogContent">
-  <!-- Default blog content here: Paste your original blog HTML here -->
-  <h1>Newton's Laws of Motion and Related Topics</h1>
-  <h2>Laws of Motion</h2>
-  <p>Newton's three laws describe the fundamental principles of classical mechanics:
-    <strong>First Law</strong> (Law of Inertia) states that an object remains at rest or in uniform motion unless acted upon by a force.
-    <strong>Second Law</strong> quantifies force as mass times acceleration (F = ma).
-    <strong>Third Law</strong> states that every action has an equal and opposite reaction.
-  </p>
-  <h2>Work and Energy</h2>
-  <p>Work is done when a force is applied to an object and it moves. Energy is the capacity to do work. The work-energy theorem states that the work done by the net force on an object is equal to the change in its kinetic energy.</p>
-  <h2>Rigid-Body Motion and Rotation</h2>
-  <p>A rigid body maintains a fixed shape and size. Its motion includes translation and rotation. Rotational motion involves torque, angular momentum, and moment of inertia. Newton’s laws also apply to rotational dynamics with analogs of force, mass, and acceleration.</p>
-  <h2>Chaos and Unpredictability</h2>
-  <p>While Newton’s laws are deterministic, in complex systems (like weather or planetary orbits), tiny changes in initial conditions can lead to vastly different outcomes. This sensitivity is the hallmark of chaos theory and illustrates the limits of predictability in classical systems.</p>
-  <h2>Relation to Other Formulations of Classical Physics</h2>
-  <p>Newton's laws are consistent with and form the basis of other classical frameworks like Lagrangian and Hamiltonian mechanics, which reformulate these principles using energy-based methods. These approaches are particularly useful in complex systems and theoretical physics.</p>
-  <h2>Relation to Other Physical Theories</h2>
-  <p>Newtonian mechanics is a special case of Einstein’s theory of relativity and breaks down at speeds close to the speed of light. At atomic scales, quantum mechanics takes over. However, Newton's laws remain remarkably accurate for everyday conditions.</p>
-  <h2>History</h2>
-  <p>Isaac Newton formulated his laws in the 17th century, building on the work of Galileo and Kepler. Published in <em>Philosophiæ Naturalis Principia Mathematica</em> (1687), these laws revolutionized science and laid the foundation for classical physics.</p>
-  <h2>See Also</h2>
-  <ul>
-    <li>Lagrangian Mechanics</li>
-    <li>Hamiltonian Mechanics</li>
-    <li>Quantum Mechanics</li>
-    <li>General Relativity</li>
-  </ul>
-  <h2>Notes</h2>
-  <p>Newton’s laws assume ideal conditions without friction or air resistance, which are accounted for in real-world applications.</p>
-  <h2>References</h2>
-  <ul>
-    <li>Halliday, Resnick & Walker - Fundamentals of Physics</li>
-    <li>Feynman Lectures on Physics</li>
-    <li>Principia Mathematica by Isaac Newton</li>
-  </ul>
-  <h2>Further Reading</h2>
-  <ul>
-    <li><a href="https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion" target="_blank" rel="noopener noreferrer">Wikipedia: Newton's Laws of Motion</a></li>
-    <li><a href="https://www.khanacademy.org/science/physics" target="_blank" rel="noopener noreferrer">Khan Academy Physics</a></li>
-  </ul>
+<div class="content">
+  <span id="disableButton" title="Disable Call Access">&#128683;</span>
+  <span id="toggleIcon" title="Toggle Call">&#9998;</span>
+  <div id="blogContent"></div>
 </div>
-
-<!-- Meeting iframe loads the meeting link -->
-<iframe id="meetingFrame" allow="camera; microphone; fullscreen" allowfullscreen></iframe>
-
+<div id="meetContainer">
+  <iframe id="meetFrame" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
+  <div id="resizeHandle"></div>
+</div>
 <script>
-// Default meeting link (full meeting URL)
-const defaultMeetingURL = "https://kmeet.infomaniak.com/cjrcjfyyvygptbdr";
+const meetContainer = document.getElementById('meetContainer');
+const toggleIcon = document.getElementById('toggleIcon');
+const disableButton = document.getElementById('disableButton');
+const resizeHandle = document.getElementById('resizeHandle');
+const meetFrame = document.getElementById('meetFrame');
+let callAccessDisabled = false;
 
-// Load meeting link from localStorage or use default
-const meetingURL = localStorage.getItem("meetingLink") || defaultMeetingURL;
-document.getElementById("meetingFrame").src = meetingURL;
-
-// Load saved blog content from localStorage if available
-const savedBlogContent = localStorage.getItem("blogContent");
-if (savedBlogContent) {
-  document.getElementById("blogContent").innerHTML = savedBlogContent;
+function toggleMeet(show) {
+  if (callAccessDisabled) return;
+  meetContainer.style.display = show ? 'block' : 'none';
 }
-</script>
 
+function leaveMeet() {
+  meetContainer.style.display = 'none';
+}
+
+function disableCallAccess() {
+  callAccessDisabled = true;
+  meetContainer.style.display = 'none';
+  toggleIcon.style.display = 'none';
+  disableButton.style.display = 'none';
+  alert('Call access disabled.');
+}
+
+toggleIcon.addEventListener('click', () => {
+  toggleMeet(meetContainer.style.display !== 'block');
+});
+
+disableButton.addEventListener('click', disableCallAccess);
+
+document.addEventListener('keydown', (e) => {
+  if (callAccessDisabled) return;
+  if (e.ctrlKey && e.key === 'z') toggleMeet(true);
+  else if (e.ctrlKey && e.key === 'x') toggleMeet(false);
+  else if (e.ctrlKey && e.key === 'b') leaveMeet();
+  else if (e.altKey && e.key.toLowerCase() === 'a') disableCallAccess();
+});
+
+let isDragging = false, dragStartX, dragStartY, startLeft, startTop;
+meetContainer.addEventListener('mousedown', (e) => {
+  if (e.target === resizeHandle) return;
+  isDragging = true;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  const rect = meetContainer.getBoundingClientRect();
+  startLeft = rect.left;
+  startTop = rect.top;
+  meetContainer.style.cursor = 'grabbing';
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  let dx = e.clientX - dragStartX;
+  let dy = e.clientY - dragStartY;
+  let newLeft = startLeft + dx;
+  let newTop = startTop + dy;
+  const winWidth = window.innerWidth;
+  const winHeight = window.innerHeight;
+  const elWidth = meetContainer.offsetWidth;
+  const elHeight = meetContainer.offsetHeight;
+  if (newLeft < 0) newLeft = 0;
+  if (newTop < 0) newTop = 0;
+  if (newLeft + elWidth > winWidth) newLeft = winWidth - elWidth;
+  if (newTop + elHeight > winHeight) newTop = winHeight - elHeight;
+  meetContainer.style.left = newLeft + 'px';
+  meetContainer.style.top = newTop + 'px';
+});
+
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+  meetContainer.style.cursor = 'move';
+});
+
+let isResizing = false, resizeStartX, resizeStartY, startWidth, startHeight;
+resizeHandle.addEventListener('mousedown', (e) => {
+  isResizing = true;
+  resizeStartX = e.clientX;
+  resizeStartY = e.clientY;
+  startWidth = meetContainer.offsetWidth;
+  startHeight = meetContainer.offsetHeight;
+  e.preventDefault();
+  e.stopPropagation();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isResizing) return;
+  let dx = e.clientX - resizeStartX;
+  let dy = e.clientY - resizeStartY;
+  let newWidth = startWidth + dx;
+  let newHeight = startHeight + dy;
+  if (newWidth < 300) newWidth = 300;
+  if (newHeight < 200) newHeight = 200;
+  const winWidth = window.innerWidth;
+  const winHeight = window.innerHeight;
+  if (newWidth > winWidth - meetContainer.offsetLeft) newWidth = winWidth - meetContainer.offsetLeft;
+  if (newHeight > winHeight - meetContainer.offsetTop) newHeight = winHeight - meetContainer.offsetTop;
+  meetContainer.style.width = newWidth + 'px';
+  meetContainer.style.height = newHeight + 'px';
+});
+
+document.addEventListener('mouseup', () => {
+  isResizing = false;
+});
+
+// Load from localStorage
+const savedContent = localStorage.getItem('blogContent');
+const savedMeetLink = localStorage.getItem('meetLink');
+if (savedContent) document.getElementById('blogContent').innerHTML = savedContent;
+if (savedMeetLink) meetFrame.src = savedMeetLink;
+</script>
 </body>
 </html>
