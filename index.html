@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Blog</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -31,13 +33,11 @@
       box-shadow: 0 0 12px #00ff88aa;
       z-index: 9999;
       overflow: hidden;
-      resize: none;
     }
     #meetContainer iframe {
       width: 100%;
       height: 100%;
       border: none;
-      pointer-events: auto;
     }
     #toggleIcon {
       cursor: pointer;
@@ -49,143 +49,75 @@
       cursor: pointer;
       font-size: 24px;
       float: right;
-      margin-right: 10px;
-    }
-    #resizeHandle {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: #00ff88;
-      bottom: 0;
-      right: 0;
-      cursor: se-resize;
-      border-top-left-radius: 8px;
     }
   </style>
 </head>
 <body>
+  <div class="content" id="blogContent">
+    <span id="disableButton" title="Disable Call">&#128683;</span>
+    <span id="toggleIcon" title="Toggle Call">&#9998;</span>
+  </div>
 
-<div class="content" id="blogContent">
-  <span id="disableButton" title="Disable Call">&#128683;</span>
-  <span id="toggleIcon" title="Toggle Call">&#9998;</span>
+  <div id="meetContainer">
+    <iframe id="meetIframe" allow="camera; microphone; fullscreen; display-capture"></iframe>
+  </div>
 
-  <!-- Blog content from localStorage will load here -->
-</div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBlAuowpf0QkqP7WTN75qVxn5Hlh0Q_fEM",
+      authDomain: "myblog-e2757.firebaseapp.com",
+      databaseURL: "https://myblog-e2757-default-rtdb.firebaseio.com",
+      projectId: "myblog-e2757",
+      storageBucket: "myblog-e2757.appspot.com",
+      messagingSenderId: "329866903587",
+      appId: "1:329866903587:web:d8df06528352501d7eb196",
+      measurementId: "G-NYHGD7NPCN"
+    };
 
-<div id="meetContainer">
-  <iframe id="meetIframe" allow="camera; microphone; fullscreen; display-capture"></iframe>
-  <div id="resizeHandle"></div>
-</div>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-<script>
-  const meetContainer = document.getElementById('meetContainer');
-  const meetIframe = document.getElementById('meetIframe');
-  const toggleIcon = document.getElementById('toggleIcon');
-  const disableButton = document.getElementById('disableButton');
-  const blogContent = document.getElementById('blogContent');
-  const resizeHandle = document.getElementById('resizeHandle');
+    const blogContent = document.getElementById('blogContent');
+    const meetIframe = document.getElementById('meetIframe');
+    const meetContainer = document.getElementById('meetContainer');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const disableButton = document.getElementById('disableButton');
+    let callDisabled = false;
 
-  let callAccessDisabled = false;
+    // Load content from Firebase
+    db.ref("siteData").once("value").then(snapshot => {
+      const data = snapshot.val();
+      blogContent.innerHTML += data?.blogContent || "<p>No blog content</p>";
+      meetIframe.src = data?.meetingLink || "https://kmeet.infomaniak.com/default";
+    });
 
-  // Load meeting link and blog content from localStorage or use default
-  const meetingLink = localStorage.getItem('meetingLink') || 'https://kmeet.infomaniak.com/yourdefaultmeeting';
-  const blogHtml = localStorage.getItem('blogContent') || '<h1>Welcome</h1><p>Blog content goes here...</p>';
-  meetIframe.src = meetingLink;
-  blogContent.innerHTML += blogHtml;
-
-  function toggleMeet(show) {
-    if (callAccessDisabled) return;
-    meetContainer.style.display = show ? 'block' : 'none';
-  }
-
-  function leaveMeet() {
-    meetIframe.src = '';
-    meetContainer.style.display = 'none';
-  }
-
-  function disableCallAccess() {
-    callAccessDisabled = true;
-    toggleIcon.style.display = 'none';
-    disableButton.style.display = 'none';
-    meetContainer.style.display = 'none';
-    alert('Call access disabled.');
-  }
-
-  toggleIcon.addEventListener('click', () => {
-    toggleMeet(meetContainer.style.display === 'none');
-  });
-
-  disableButton.addEventListener('click', disableCallAccess);
-
-  document.addEventListener('keydown', (e) => {
-    if (callAccessDisabled) return;
-    if (e.ctrlKey && e.key === 'z') toggleMeet(true);
-    if (e.ctrlKey && e.key === 'x') toggleMeet(false);
-    if (e.ctrlKey && e.key === 'b') leaveMeet();
-    if (e.altKey && e.key.toLowerCase() === 'a') disableCallAccess();
-  });
-
-  // Hide iframe when clicking outside it or pen icon
-  document.addEventListener('click', (e) => {
-    if (!meetContainer.contains(e.target) && e.target !== toggleIcon && !callAccessDisabled) {
-      toggleMeet(false);
+    function toggleMeet(show) {
+      if (callDisabled) return;
+      meetContainer.style.display = show ? 'block' : 'none';
     }
-  });
 
-  // --- Drag logic ---
-  let isDragging = false;
-  let dragStartX, dragStartY, startLeft, startTop;
-
-  meetContainer.addEventListener('mousedown', (e) => {
-    if (e.target === resizeHandle) return; // Don't drag when resizing
-    isDragging = true;
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
-    const rect = meetContainer.getBoundingClientRect();
-    startLeft = rect.left;
-    startTop = rect.top;
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-      const dx = e.clientX - dragStartX;
-      const dy = e.clientY - dragStartY;
-      meetContainer.style.left = Math.max(0, startLeft + dx) + 'px';
-      meetContainer.style.top = Math.max(0, startTop + dy) + 'px';
+    function disableCall() {
+      callDisabled = true;
+      toggleIcon.style.display = 'none';
+      disableButton.style.display = 'none';
+      meetContainer.style.display = 'none';
+      alert("Call disabled.");
     }
-  });
 
-  document.addEventListener('mouseup', () => {
-    isDragging = false;
-  });
+    toggleIcon.addEventListener('click', () => toggleMeet(meetContainer.style.display === 'none'));
+    disableButton.addEventListener('click', disableCall);
 
-  // --- Resize logic ---
-  let isResizing = false;
-  let resizeStartX, resizeStartY, startWidth, startHeight;
+    document.addEventListener('click', (e) => {
+      if (!meetContainer.contains(e.target) && e.target !== toggleIcon && !callDisabled) {
+        toggleMeet(false);
+      }
+    });
 
-  resizeHandle.addEventListener('mousedown', (e) => {
-    isResizing = true;
-    resizeStartX = e.clientX;
-    resizeStartY = e.clientY;
-    startWidth = meetContainer.offsetWidth;
-    startHeight = meetContainer.offsetHeight;
-    e.preventDefault();
-    e.stopPropagation();
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (isResizing) {
-      let dx = e.clientX - resizeStartX;
-      let dy = e.clientY - resizeStartY;
-      meetContainer.style.width = Math.max(300, startWidth + dx) + 'px';
-      meetContainer.style.height = Math.max(200, startHeight + dy) + 'px';
-    }
-  });
-
-  document.addEventListener('mouseup', () => {
-    isResizing = false;
-  });
-</script>
+    document.addEventListener('keydown', (e) => {
+      if (callDisabled) return;
+      if (e.ctrlKey && e.key === 'z') toggleMeet(true);
+      if (e.ctrlKey && e.key === 'x') toggleMeet(false);
+    });
+  </script>
 </body>
 </html>
