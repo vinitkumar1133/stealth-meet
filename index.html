@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Blog</title>
   <style>
     body {
@@ -23,133 +23,96 @@
       position: fixed;
       top: 100px;
       left: 100px;
-      min-width: 300px;
-      min-height: 200px;
+      width: 480px;
+      height: 320px;
       border: 2px solid #555;
       border-radius: 8px;
       background: #000;
       box-shadow: 0 0 12px #00ff88aa;
       z-index: 9999;
       cursor: move;
-      overflow: hidden;
       resize: both;
+      overflow: hidden;
     }
     #meetContainer iframe {
       width: 100%;
       height: 100%;
       border: none;
       display: block;
-      pointer-events: auto;
     }
     #disableButton, #toggleIcon {
       cursor: pointer;
       font-size: 24px;
       float: right;
-      margin-bottom: 10px;
+      margin-left: 10px;
       user-select: none;
-      margin-right: 10px;
     }
   </style>
 </head>
 <body>
-<div class="content" id="blogContent"></div>
-<span id="disableButton" title="Disable Call Access">&#128683;</span>
-<span id="toggleIcon" title="Toggle Call">&#9998;</span>
-<div id="meetContainer">
-  <iframe id="meetIframe" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
+
+<div class="content" id="blogContent">
+  <span id="disableButton" title="Disable Call Access">&#128683;</span>
+  <span id="toggleIcon" title="Toggle Call">&#9998;</span>
+
+  <div id="editableContent">
+    <h1>Blog Content</h1>
+    <p>This content can be edited from the admin panel.</p>
+  </div>
 </div>
+
+<div id="meetContainer">
+  <iframe src="" id="meetIframe" allow="camera; microphone; fullscreen; display-capture"></iframe>
+</div>
+
 <script>
-const meetContainer = document.getElementById('meetContainer');
-const toggleIcon = document.getElementById('toggleIcon');
-const disableButton = document.getElementById('disableButton');
-const blogContent = document.getElementById('blogContent');
-const meetIframe = document.getElementById('meetIframe');
+  const meetContainer = document.getElementById('meetContainer');
+  const toggleIcon = document.getElementById('toggleIcon');
+  const disableButton = document.getElementById('disableButton');
+  const meetIframe = document.getElementById('meetIframe');
+  const blogContent = document.getElementById('blogContent');
 
-let callAccessDisabled = false;
+  let callAccessDisabled = false;
+  const savedLink = localStorage.getItem('meetingLink');
+  const savedContent = localStorage.getItem('blogContent');
 
-// Load saved content and link
-const savedContent = localStorage.getItem('blogContent');
-const savedLink = localStorage.getItem('meetLink');
-if (savedContent) blogContent.innerHTML = savedContent;
-if (savedLink) meetIframe.src = savedLink;
+  if (savedLink) meetIframe.src = savedLink;
+  if (savedContent) document.getElementById('editableContent').innerHTML = savedContent;
 
-function toggleMeet(show) {
-  if (callAccessDisabled) return;
-  meetContainer.style.display = show ? 'block' : 'none';
-}
-
-function leaveMeet() {
-  meetIframe.src = '';
-  meetContainer.style.display = 'none';
-}
-
-function disableCallAccess() {
-  callAccessDisabled = true;
-  meetContainer.style.display = 'none';
-  toggleIcon.style.display = 'none';
-  disableButton.style.display = 'none';
-  alert('Call access disabled.');
-}
-
-toggleIcon.addEventListener('click', () => {
-  if (meetContainer.style.display === 'block') {
-    toggleMeet(false);
-  } else {
-    toggleMeet(true);
-    if (savedLink && !meetIframe.src) meetIframe.src = savedLink;
+  function toggleMeet(show) {
+    if (callAccessDisabled) return;
+    meetContainer.style.display = show ? 'block' : 'none';
   }
-});
 
-disableButton.addEventListener('click', disableCallAccess);
-
-document.addEventListener('keydown', (e) => {
-  if (callAccessDisabled) return;
-  if (e.ctrlKey && e.key === 'z') toggleMeet(true);
-  else if (e.ctrlKey && e.key === 'x') toggleMeet(false);
-  else if (e.ctrlKey && e.key === 'b') leaveMeet();
-  else if (e.altKey && e.key.toLowerCase() === 'a') disableCallAccess();
-});
-
-document.addEventListener('click', (e) => {
-  if (!meetContainer.contains(e.target) && meetContainer.style.display === 'block') {
-    toggleMeet(false);
+  function leaveMeet() {
+    meetContainer.style.display = 'none';
   }
-});
 
-// Drag logic
-let isDragging = false, dragStartX, dragStartY, startLeft, startTop;
-meetContainer.addEventListener('mousedown', (e) => {
-  if (e.target !== meetContainer) return;
-  isDragging = true;
-  dragStartX = e.clientX;
-  dragStartY = e.clientY;
-  const rect = meetContainer.getBoundingClientRect();
-  startLeft = rect.left;
-  startTop = rect.top;
-  e.preventDefault();
-});
+  function disableCallAccess() {
+    callAccessDisabled = true;
+    meetContainer.style.display = 'none';
+    toggleIcon.style.display = 'none';
+    disableButton.style.display = 'none';
+    alert('Call access disabled.');
+  }
 
-document.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  let dx = e.clientX - dragStartX;
-  let dy = e.clientY - dragStartY;
-  let newLeft = startLeft + dx;
-  let newTop = startTop + dy;
-  const winWidth = window.innerWidth;
-  const winHeight = window.innerHeight;
-  const elWidth = meetContainer.offsetWidth;
-  const elHeight = meetContainer.offsetHeight;
-  if (newLeft < 0) newLeft = 0;
-  if (newTop < 0) newTop = 0;
-  if (newLeft + elWidth > winWidth) newLeft = winWidth - elWidth;
-  if (newTop + elHeight > winHeight) newTop = winHeight - elHeight;
-  meetContainer.style.left = newLeft + 'px';
-  meetContainer.style.top = newTop + 'px';
-});
+  toggleIcon.onclick = () => {
+    toggleMeet(meetContainer.style.display !== 'block');
+  };
 
-document.addEventListener('mouseup', () => {
-  if (isDragging) isDragging = false;
-});
+  disableButton.onclick = disableCallAccess;
+
+  document.addEventListener('keydown', (e) => {
+    if (callAccessDisabled) return;
+    if (e.ctrlKey && e.key === 'z') toggleMeet(true);
+    else if (e.ctrlKey && e.key === 'x') toggleMeet(false);
+    else if (e.ctrlKey && e.key === 'b') leaveMeet();
+    else if (e.altKey && e.key.toLowerCase() === 'a') disableCallAccess();
+  });
+
+  blogContent.addEventListener('click', () => {
+    if (!callAccessDisabled) toggleMeet(false);
+  });
 </script>
 </body>
 </html>
