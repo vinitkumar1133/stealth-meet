@@ -49,6 +49,7 @@
       cursor: pointer;
       font-size: 24px;
       float: right;
+      margin-right: 10px;
     }
     #resizeHandle {
       position: absolute;
@@ -68,7 +69,7 @@
   <span id="disableButton" title="Disable Call">&#128683;</span>
   <span id="toggleIcon" title="Toggle Call">&#9998;</span>
 
-  <!-- Blog content from localStorage -->
+  <!-- Blog content from localStorage will load here -->
 </div>
 
 <div id="meetContainer">
@@ -86,8 +87,8 @@
 
   let callAccessDisabled = false;
 
-  // Load meeting link and blog content
-  const meetingLink = localStorage.getItem('meetingLink') || 'https://kmeet.infomaniak.com/yourdefault';
+  // Load meeting link and blog content from localStorage or use default
+  const meetingLink = localStorage.getItem('meetingLink') || 'https://kmeet.infomaniak.com/yourdefaultmeeting';
   const blogHtml = localStorage.getItem('blogContent') || '<h1>Welcome</h1><p>Blog content goes here...</p>';
   meetIframe.src = meetingLink;
   blogContent.innerHTML += blogHtml;
@@ -124,7 +125,7 @@
     if (e.altKey && e.key.toLowerCase() === 'a') disableCallAccess();
   });
 
-  // Hide iframe when clicking outside it
+  // Hide iframe when clicking outside it or pen icon
   document.addEventListener('click', (e) => {
     if (!meetContainer.contains(e.target) && e.target !== toggleIcon && !callAccessDisabled) {
       toggleMeet(false);
@@ -136,7 +137,7 @@
   let dragStartX, dragStartY, startLeft, startTop;
 
   meetContainer.addEventListener('mousedown', (e) => {
-    if (e.target === resizeHandle) return;
+    if (e.target === resizeHandle) return; // Don't drag when resizing
     isDragging = true;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
