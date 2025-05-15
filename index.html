@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Blog</title>
   <style>
     body {
@@ -16,68 +16,81 @@
     .content {
       max-width: 700px;
       margin: auto;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     #meetContainer {
       display: none;
       position: fixed;
       top: 100px;
       left: 100px;
-      width: 480px;
-      height: 320px;
-      border: 2px solid #555;
+      width: 500px;
+      height: 350px;
+      border: 2px solid #00ff88;
       border-radius: 8px;
-      background: #000;
+      background: black;
       box-shadow: 0 0 12px #00ff88aa;
       z-index: 9999;
-      cursor: move;
-      resize: both;
       overflow: hidden;
+      resize: none;
     }
     #meetContainer iframe {
       width: 100%;
       height: 100%;
       border: none;
-      display: block;
+      pointer-events: auto;
     }
-    #disableButton, #toggleIcon {
+    #toggleIcon {
       cursor: pointer;
       font-size: 24px;
       float: right;
-      margin-left: 10px;
-      user-select: none;
+      margin-right: 10px;
+    }
+    #disableButton {
+      cursor: pointer;
+      font-size: 24px;
+      float: right;
+    }
+    #resizeHandle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #00ff88;
+      bottom: 0;
+      right: 0;
+      cursor: se-resize;
+      border-top-left-radius: 8px;
     }
   </style>
 </head>
 <body>
 
 <div class="content" id="blogContent">
-  <span id="disableButton" title="Disable Call Access">&#128683;</span>
+  <span id="disableButton" title="Disable Call">&#128683;</span>
   <span id="toggleIcon" title="Toggle Call">&#9998;</span>
 
-  <div id="editableContent">
-    <h1>Blog Content</h1>
-    <p>This content can be edited from the admin panel.</p>
-  </div>
+  <!-- Blog content from localStorage -->
 </div>
 
 <div id="meetContainer">
-  <iframe src="" id="meetIframe" allow="camera; microphone; fullscreen; display-capture"></iframe>
+  <iframe id="meetIframe" allow="camera; microphone; fullscreen; display-capture"></iframe>
+  <div id="resizeHandle"></div>
 </div>
 
 <script>
   const meetContainer = document.getElementById('meetContainer');
+  const meetIframe = document.getElementById('meetIframe');
   const toggleIcon = document.getElementById('toggleIcon');
   const disableButton = document.getElementById('disableButton');
-  const meetIframe = document.getElementById('meetIframe');
   const blogContent = document.getElementById('blogContent');
+  const resizeHandle = document.getElementById('resizeHandle');
 
   let callAccessDisabled = false;
-  const savedLink = localStorage.getItem('meetingLink');
-  const savedContent = localStorage.getItem('blogContent');
 
-  if (savedLink) meetIframe.src = savedLink;
-  if (savedContent) document.getElementById('editableContent').innerHTML = savedContent;
+  // Load meeting link and blog content
+  const meetingLink = localStorage.getItem('meetingLink') || 'https://kmeet.infomaniak.com/yourdefault';
+  const blogHtml = localStorage.getItem('blogContent') || '<h1>Welcome</h1><p>Blog content goes here...</p>';
+  meetIframe.src = meetingLink;
+  blogContent.innerHTML += blogHtml;
 
   function toggleMeet(show) {
     if (callAccessDisabled) return;
@@ -85,33 +98,92 @@
   }
 
   function leaveMeet() {
+    meetIframe.src = '';
     meetContainer.style.display = 'none';
   }
 
   function disableCallAccess() {
     callAccessDisabled = true;
-    meetContainer.style.display = 'none';
     toggleIcon.style.display = 'none';
     disableButton.style.display = 'none';
+    meetContainer.style.display = 'none';
     alert('Call access disabled.');
   }
 
-  toggleIcon.onclick = () => {
-    toggleMeet(meetContainer.style.display !== 'block');
-  };
+  toggleIcon.addEventListener('click', () => {
+    toggleMeet(meetContainer.style.display === 'none');
+  });
 
-  disableButton.onclick = disableCallAccess;
+  disableButton.addEventListener('click', disableCallAccess);
 
   document.addEventListener('keydown', (e) => {
     if (callAccessDisabled) return;
     if (e.ctrlKey && e.key === 'z') toggleMeet(true);
-    else if (e.ctrlKey && e.key === 'x') toggleMeet(false);
-    else if (e.ctrlKey && e.key === 'b') leaveMeet();
-    else if (e.altKey && e.key.toLowerCase() === 'a') disableCallAccess();
+    if (e.ctrlKey && e.key === 'x') toggleMeet(false);
+    if (e.ctrlKey && e.key === 'b') leaveMeet();
+    if (e.altKey && e.key.toLowerCase() === 'a') disableCallAccess();
   });
 
-  blogContent.addEventListener('click', () => {
-    if (!callAccessDisabled) toggleMeet(false);
+  // Hide iframe when clicking outside it
+  document.addEventListener('click', (e) => {
+    if (!meetContainer.contains(e.target) && e.target !== toggleIcon && !callAccessDisabled) {
+      toggleMeet(false);
+    }
+  });
+
+  // --- Drag logic ---
+  let isDragging = false;
+  let dragStartX, dragStartY, startLeft, startTop;
+
+  meetContainer.addEventListener('mousedown', (e) => {
+    if (e.target === resizeHandle) return;
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    const rect = meetContainer.getBoundingClientRect();
+    startLeft = rect.left;
+    startTop = rect.top;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      meetContainer.style.left = Math.max(0, startLeft + dx) + 'px';
+      meetContainer.style.top = Math.max(0, startTop + dy) + 'px';
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  // --- Resize logic ---
+  let isResizing = false;
+  let resizeStartX, resizeStartY, startWidth, startHeight;
+
+  resizeHandle.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    resizeStartX = e.clientX;
+    resizeStartY = e.clientY;
+    startWidth = meetContainer.offsetWidth;
+    startHeight = meetContainer.offsetHeight;
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isResizing) {
+      let dx = e.clientX - resizeStartX;
+      let dy = e.clientY - resizeStartY;
+      meetContainer.style.width = Math.max(300, startWidth + dx) + 'px';
+      meetContainer.style.height = Math.max(200, startHeight + dy) + 'px';
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    isResizing = false;
   });
 </script>
 </body>
