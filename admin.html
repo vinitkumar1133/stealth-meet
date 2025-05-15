@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1c1c1c;
+      color: #eee;
+      padding: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin-top: 10px;
+      width: 100%;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+    }
+    #login, #panel {
+      max-width: 400px;
+      margin: auto;
+    }
+    button {
+      background-color: #00ff88;
+      color: #000;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="login">
+    <h2>Admin Login</h2>
+    <input type="password" id="adminPass" placeholder="Enter admin password" />
+    <button onclick="checkPassword()">Login</button>
+    <p id="loginError" style="color: red;"></p>
+  </div>
+
+  <div id="panel" style="display: none;">
+    <h2>Edit Meeting Link</h2>
+    <input type="text" id="meetingInput" placeholder="Enter new meeting URL" />
+    <button onclick="updateMeeting()">Save</button>
+    <p id="saveMsg" style="color: #00ff88;"></p>
+  </div>
+
+  <script>
+    const correctPassword = "admin123"; // Change this if needed
+
+    function checkPassword() {
+      const input = document.getElementById("adminPass").value;
+      if (input === correctPassword) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("panel").style.display = "block";
+        document.getElementById("meetingInput").value = localStorage.getItem("meetingLink") || "";
+      } else {
+        document.getElementById("loginError").textContent = "Incorrect password.";
+      }
+    }
+
+    function updateMeeting() {
+      const newLink = document.getElementById("meetingInput").value.trim();
+      if (newLink) {
+        localStorage.setItem("meetingLink", newLink);
+        document.getElementById("saveMsg").textContent = "Meeting link updated.";
+      }
+    }
+  </script>
+</body>
+</html>
