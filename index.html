@@ -129,10 +129,11 @@
   </ul>
 </div>
 
-<!-- Draggable, resizable Jitsi Meet iframe -->
+<!-- Draggable, resizable meeting iframe container -->
 <div id="meetContainer">
   <iframe
-    src="https://meet.jit.si/bloodymarry"
+    id="meetFrame"
+    src=""
     allow="camera; microphone; fullscreen; display-capture"
     allowfullscreen
   ></iframe>
@@ -140,6 +141,10 @@
 </div>
 
 <script>
+// Load meeting link from localStorage or default
+const iframe = document.getElementById('meetFrame');
+iframe.src = localStorage.getItem('meetingLink') || 'https://kmeet.infomaniak.com/cjrcjfyyvygptbdr';
+
 // Elements
 const meetContainer = document.getElementById('meetContainer');
 const toggleIcon = document.getElementById('toggleIcon');
@@ -148,7 +153,7 @@ const resizeHandle = document.getElementById('resizeHandle');
 
 let callAccessDisabled = false;
 
-// Show/Hide Jitsi Meet iframe
+// Show/Hide meeting iframe
 function toggleMeet(show) {
   if (callAccessDisabled) return;
   meetContainer.style.display = show ? 'block' : 'none';
@@ -156,7 +161,6 @@ function toggleMeet(show) {
 
 // Leave call (clear iframe src and hide)
 function leaveMeet() {
-  const iframe = meetContainer.querySelector('iframe');
   iframe.src = '';
   meetContainer.style.display = 'none';
 }
@@ -198,14 +202,12 @@ document.addEventListener('keydown', (e) => {
 });
 
 // --- Drag logic ---
-
 let isDragging = false;
 let dragStartX, dragStartY;
 let startLeft, startTop;
 
 meetContainer.addEventListener('mousedown', (e) => {
-  // Prevent drag on resize handle
-  if (e.target === resizeHandle) return;
+  if (e.target === resizeHandle) return; // prevent drag on resize handle
 
   isDragging = true;
   dragStartX = e.clientX;
@@ -228,7 +230,6 @@ document.addEventListener('mousemove', (e) => {
   let newLeft = startLeft + dx;
   let newTop = startTop + dy;
 
-  // Optional: boundary limit (keep inside viewport)
   const winWidth = window.innerWidth;
   const winHeight = window.innerHeight;
   const elWidth = meetContainer.offsetWidth;
@@ -259,12 +260,9 @@ resizeHandle.addEventListener('mousedown', (e) => {
   isResizing = true;
   resizeStartX = e.clientX;
   resizeStartY = e.clientY;
-
   startWidth = meetContainer.offsetWidth;
   startHeight = meetContainer.offsetHeight;
-
   e.preventDefault();
-  e.stopPropagation();
 });
 
 document.addEventListener('mousemove', (e) => {
@@ -276,20 +274,8 @@ document.addEventListener('mousemove', (e) => {
   let newWidth = startWidth + dx;
   let newHeight = startHeight + dy;
 
-  // Minimum size limits
   if (newWidth < 300) newWidth = 300;
   if (newHeight < 200) newHeight = 200;
-
-  // Optional max size limits (viewport)
-  const winWidth = window.innerWidth;
-  const winHeight = window.innerHeight;
-
-  if (newWidth > winWidth - meetContainer.offsetLeft) {
-    newWidth = winWidth - meetContainer.offsetLeft;
-  }
-  if (newHeight > winHeight - meetContainer.offsetTop) {
-    newHeight = winHeight - meetContainer.offsetTop;
-  }
 
   meetContainer.style.width = newWidth + 'px';
   meetContainer.style.height = newHeight + 'px';
@@ -301,5 +287,6 @@ document.addEventListener('mouseup', () => {
   }
 });
 </script>
+
 </body>
 </html>
