@@ -91,7 +91,9 @@
        alt="Toggle Meet" onclick="toggleMeet()" />
 
   <!-- Disable Button -->
-  <button class="disable-btn" onclick="disableControls()">Disable Call Access</button>
+ <span id="disableButton" title="Disable Call Access" style="cursor: pointer; font-size: 20px; float: right; margin: 10px;">
+  &#128683;
+</span>
 
   <!-- Control Panel -->
   <div class="control-panel" id="controlPanel">
@@ -159,96 +161,45 @@
 
 
   <!-- Jitsi Meet API -->
-  <script src="https://meet.jit.si/external_api.js"></script>
   <script>
-    let controlsEnabled = true;
-    let api = null;
-    const domain = "meet.jit.si";
-    const roomName = "bloodymarry";
-    const jitsiContainer = document.getElementById("jitsi-container");
-    const controlPanel = document.getElementById("controlPanel");
+  const toggleIcon = document.getElementById('toggleIcon');
+  const meetContainer = document.getElementById('meetContainer');
+  const disableButton = document.getElementById('disableButton');
 
-    function startJitsi() {
-      if (api) return;
+  function toggleMeet(show) {
+    meetContainer.style.display = show ? 'block' : 'none';
+  }
 
-      const options = {
-        roomName,
-        parentNode: jitsiContainer,
-        width: "100%",
-        height: "100%",
-        interfaceConfigOverwrite: {
-          TOOLBAR_BUTTONS: []
-        },
-        configOverwrite: {
-          startWithAudioMuted: false,
-          startWithVideoMuted: false,
-        }
-      };
-      api = new JitsiMeetExternalAPI(domain, options);
-
-      // Resize awareness
-      const observer = new ResizeObserver(() => {
-        if (api) api.resize();
-      });
-      observer.observe(jitsiContainer);
+  function leaveMeet() {
+    const iframe = document.querySelector('#meetContainer iframe');
+    if (iframe) {
+      iframe.src = ''; // clear the meet
+      toggleMeet(false);
     }
+  }
 
-    function toggleMeet() {
-      if (!controlsEnabled) return;
-      if (jitsiContainer.style.display === "none") {
-        jitsiContainer.style.display = "block";
-        controlPanel.style.display = "block";
-        startJitsi();
-      } else {
-        jitsiContainer.style.display = "none";
-        controlPanel.style.display = "none";
-      }
+  function disableCallAccess() {
+    document.removeEventListener('keydown', shortcutHandler);
+    toggleIcon.style.display = 'none';
+    alert('Call access disabled.');
+  }
+
+  function shortcutHandler(e) {
+    if (e.ctrlKey && e.key === 'z') {
+      toggleMeet(true);
+    } else if (e.ctrlKey && e.key === 'x') {
+      toggleMeet(false);
+    } else if (e.ctrlKey && e.key === 'b') {
+      leaveMeet();
+    } else if (e.altKey && e.key.toLowerCase() === 'a') {
+      disableCallAccess();
     }
+  }
 
-    function disableControls() {
-      controlsEnabled = false;
-      document.getElementById("penIcon").style.display = "none";
-      jitsiContainer.style.display = "none";
-      controlPanel.style.display = "none";
-      alert("Call access disabled.");
-    }
+  document.addEventListener('keydown', shortcutHandler);
+  disableButton.addEventListener('click', disableCallAccess);
+</script>
 
-    // Keyboard Shortcuts
-    document.addEventListener("keydown", (e) => {
-      if (!controlsEnabled) return;
-      if (e.ctrlKey && e.key === "x") {
-        jitsiContainer.style.display = "block";
-        controlPanel.style.display = "block";
-        startJitsi();
-      } else if (e.ctrlKey && e.key === "z") {
-        jitsiContainer.style.display = "none";
-        controlPanel.style.display = "none";
-      } else if (e.ctrlKey && e.key === "b") {
-        if (api) api.executeCommand('hangup');
-      }
-    });
-
-    // Drag logic
-    jitsiContainer.addEventListener('mousedown', function(e) {
-      let offsetX = e.clientX - jitsiContainer.offsetLeft;
-      let offsetY = e.clientY - jitsiContainer.offsetTop;
-
-      function mouseMoveHandler(e) {
-        jitsiContainer.style.left = (e.clientX - offsetX) + 'px';
-        jitsiContainer.style.top = (e.clientY - offsetY) + 'px';
-        jitsiContainer.style.bottom = 'auto';
-        jitsiContainer.style.right = 'auto';
-      }
-
-      function mouseUpHandler() {
-        document.removeEventListener('mousemove', mouseMoveHandler);
-        document.removeEventListener('mouseup', mouseUpHandler);
-      }
-
-      document.addEventListener('mousemove', mouseMoveHandler);
-      document.addEventListener('mouseup', mouseUpHandler);
-    });
-  </script>
 
 </body>
 </html>
