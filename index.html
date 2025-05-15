@@ -1,112 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Newton's Laws of Motion</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
-      padding: 40px;
-    }
-    .content {
-      max-width: 800px;
-      margin: auto;
-    }
-    .pen-icon {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 30px;
-      height: 30px;
-      cursor: pointer;
-      opacity: 0.6;
-      transition: opacity 0.3s;
-      z-index: 1000;
-    }
-    .pen-icon:hover {
-      opacity: 1;
-    }
-    .disable-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      padding: 6px 12px;
-      font-size: 14px;
-      cursor: pointer;
-      background: #e74c3c;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      z-index: 1000;
-    }
-    .control-panel {
-      display: none;
-      position: fixed;
-      bottom: 270px;
-      right: 20px;
-      background: #222;
-      color: white;
-      padding: 8px;
-      border-radius: 8px;
-      z-index: 999;
-    }
-    .control-panel button {
-      margin: 0 4px;
-      padding: 6px 10px;
-      border: none;
-      background: #555;
-      color: white;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .control-panel button:hover {
-      background: #777;
-    }
-    #jitsi-container {
-      display: none;
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 320px;
-      height: 240px;
-      resize: both;
-      overflow: hidden;
-      z-index: 998;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      border-radius: 10px;
-      background: white;
-      cursor: move;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Stealth Call + Blog</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #121212;
+    color: #eee;
+    margin: 0; padding: 20px;
+    user-select: none;
+  }
+  .content {
+    max-width: 700px;
+    margin: auto;
+    line-height: 1.5;
+  }
+  /* Draggable & resizable meet container */
+  #meetContainer {
+    display: none;
+    position: fixed;
+    top: 100px;
+    left: 100px;
+    width: 480px;
+    height: 320px;
+    border: 2px solid #555;
+    border-radius: 8px;
+    background: #000;
+    box-shadow: 0 0 12px #00ff88aa;
+    z-index: 9999;
+    resize: both;
+    overflow: hidden;
+    cursor: move;
+  }
+  #meetContainer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+  /* Ban icon to disable */
+  #disableButton {
+    cursor: pointer;
+    font-size: 24px;
+    float: right;
+    margin-bottom: 10px;
+    user-select: none;
+  }
+  /* Pen icon (toggle icon) */
+  #toggleIcon {
+    cursor: pointer;
+    font-size: 24px;
+    float: right;
+    margin-bottom: 10px;
+    user-select: none;
+  }
+</style>
 </head>
 <body>
 
-  <!-- Pen Icon -->
-  <img src="https://img.icons8.com/ios-filled/50/000000/pen.png"
-       class="pen-icon" id="penIcon"
-       alt="Toggle Meet" onclick="toggleMeet()" />
-
-  <!-- Disable Button -->
- <span id="disableButton" title="Disable Call Access" style="cursor: pointer; font-size: 20px; float: right; margin: 10px;">
-  &#128683;
-</span>
-
-  <!-- Control Panel -->
-  <div class="control-panel" id="controlPanel">
-    <button onclick="api.executeCommand('toggleAudio')">🎙️ Mic</button>
-    <button onclick="api.executeCommand('toggleVideo')">📷 Cam</button>
-    <button onclick="api.executeCommand('hangup')">❌ Leave</button>
-  </div>
-
-  <!-- Jitsi Meet Container -->
-  <div id="jitsi-container"></div>
-
-  <!-- Blog Content -->
-  <div class="content">
+<div class="content">
+  <span id="disableButton" title="Disable Call Access">&#128683;</span>
+  <span id="toggleIcon" title="Toggle Call">&#9998;</span>
+  
   <h1>Newton's Laws of Motion and Related Topics</h1>
 
   <h2>Laws of Motion</h2>
@@ -154,52 +111,118 @@
 
   <h2>Further Reading</h2>
   <ul>
-    <li><a href="https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion" target="_blank">Wikipedia: Newton's Laws of Motion</a></li>
-    <li><a href="https://www.khanacademy.org/science/physics" target="_blank">Khan Academy Physics</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion" target="_blank" rel="noopener noreferrer">Wikipedia: Newton's Laws of Motion</a></li>
+    <li><a href="https://www.khanacademy.org/science/physics" target="_blank" rel="noopener noreferrer">Khan Academy Physics</a></li>
   </ul>
 </div>
 
+<!-- Draggable, resizable Jitsi Meet iframe -->
+<div id="meetContainer">
+  <iframe
+    src="https://meet.jit.si/bloodymarry"
+    allow="camera; microphone; fullscreen; display-capture"
+    allowfullscreen
+  ></iframe>
+</div>
 
-  <!-- Jitsi Meet API -->
-  <script>
-  const toggleIcon = document.getElementById('toggleIcon');
-  const meetContainer = document.getElementById('meetContainer');
-  const disableButton = document.getElementById('disableButton');
+<script>
+// Elements
+const meetContainer = document.getElementById('meetContainer');
+const toggleIcon = document.getElementById('toggleIcon');
+const disableButton = document.getElementById('disableButton');
 
-  function toggleMeet(show) {
-    meetContainer.style.display = show ? 'block' : 'none';
+let callAccessDisabled = false;
+
+// Show/Hide Jitsi Meet iframe
+function toggleMeet(show) {
+  if (callAccessDisabled) return;
+  meetContainer.style.display = show ? 'block' : 'none';
+}
+
+// Leave call (clear iframe src and hide)
+function leaveMeet() {
+  const iframe = meetContainer.querySelector('iframe');
+  iframe.src = '';
+  meetContainer.style.display = 'none';
+}
+
+// Disable call access
+function disableCallAccess() {
+  callAccessDisabled = true;
+  meetContainer.style.display = 'none';
+  toggleIcon.style.display = 'none';
+  disableButton.style.display = 'none';
+  alert('Call access disabled.');
+}
+
+// Toggle icon click: show/hide call window
+toggleIcon.addEventListener('click', () => {
+  if (meetContainer.style.display === 'block') {
+    toggleMeet(false);
+  } else {
+    toggleMeet(true);
   }
+});
 
-  function leaveMeet() {
-    const iframe = document.querySelector('#meetContainer iframe');
-    if (iframe) {
-      iframe.src = ''; // clear the meet
-      toggleMeet(false);
-    }
+// Disable button click
+disableButton.addEventListener('click', disableCallAccess);
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (callAccessDisabled) return;
+
+  if (e.ctrlKey && e.key === 'z') {
+    toggleMeet(true);
+  } else if (e.ctrlKey && e.key === 'x') {
+    toggleMeet(false);
+  } else if (e.ctrlKey && e.key === 'b') {
+    leaveMeet();
+  } else if (e.altKey && e.key.toLowerCase() === 'a') {
+    disableCallAccess();
   }
+});
 
-  function disableCallAccess() {
-    document.removeEventListener('keydown', shortcutHandler);
-    toggleIcon.style.display = 'none';
-    alert('Call access disabled.');
+// --- Drag and Resize Logic ---
+
+// Drag variables
+let isDragging = false;
+let dragStartX, dragStartY;
+let startLeft, startTop;
+
+// Mouse down to start drag
+meetContainer.addEventListener('mousedown', (e) => {
+  // Only drag if clicked near border or header area - here anywhere is draggable for simplicity
+  isDragging = true;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  const rect = meetContainer.getBoundingClientRect();
+  startLeft = rect.left;
+  startTop = rect.top;
+  meetContainer.style.cursor = 'grabbing';
+  e.preventDefault();
+});
+
+// Mouse move to drag
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - dragStartX;
+  const dy = e.clientY - dragStartY;
+  meetContainer.style.left = startLeft + dx + 'px';
+  meetContainer.style.top = startTop + dy + 'px';
+});
+
+// Mouse up to stop drag
+document.addEventListener('mouseup', () => {
+  if (isDragging) {
+    isDragging = false;
+    meetContainer.style.cursor = 'move';
   }
+});
 
-  function shortcutHandler(e) {
-    if (e.ctrlKey && e.key === 'z') {
-      toggleMeet(true);
-    } else if (e.ctrlKey && e.key === 'x') {
-      toggleMeet(false);
-    } else if (e.ctrlKey && e.key === 'b') {
-      leaveMeet();
-    } else if (e.altKey && e.key.toLowerCase() === 'a') {
-      disableCallAccess();
-    }
-  }
+// The CSS resize: both on #meetContainer handles resizing with mouse automatically.
 
-  document.addEventListener('keydown', shortcutHandler);
-  disableButton.addEventListener('click', disableCallAccess);
 </script>
-
 
 </body>
 </html>
+
