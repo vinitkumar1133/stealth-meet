@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Panel</title>
   <script src="https://cdn.ckeditor.com/4.21.0/standard/ckeditor.js"></script>
-
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -70,7 +67,8 @@
   </div>
 
   <script>
-    // Your Firebase configuration (replace with your config)
+    const PASSWORD = "admin123"; // Change to your own
+
     const firebaseConfig = {
       apiKey: "AIzaSyBlAuowpf0QkqP7WTN75qVxn5Hlh0Q_fEM",
       authDomain: "myblog-e2757.firebaseapp.com",
@@ -82,11 +80,8 @@
       measurementId: "G-NYHGD7NPCN"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const PASSWORD = "admin123"; // Your admin password
+    const database = firebase.database();
 
     function checkPassword() {
       const input = document.getElementById("adminPassword").value;
@@ -100,40 +95,28 @@
     }
 
     function saveData() {
-      const meetingLink = document.getElementById("meetingLink").value.trim();
+      const meetingLink = document.getElementById("meetingLink").value;
       const blogContent = CKEDITOR.instances.blogContent.getData();
 
-      if (!meetingLink) {
-        alert("Please enter a meeting link.");
-        return;
-      }
-
-      db.ref('/').set({
-        meetingLink,
-        blogContent
+      database.ref("siteData").set({
+        meetingLink: meetingLink,
+        blogContent: blogContent
       }).then(() => {
         alert("Changes saved to Firebase!");
-      }).catch((error) => {
-        alert("Failed to save changes: " + error.message);
+      }).catch(error => {
+        console.error("Error saving data:", error);
+        alert("Error saving data.");
       });
     }
 
     function loadData() {
-      db.ref('/').once('value')
-        .then(snapshot => {
-          const data = snapshot.val() || {};
-          document.getElementById("meetingLink").value = data.meetingLink || "";
-          const content = data.blogContent || "<p>Start writing your blog content here...</p>";
-          CKEDITOR.replace("blogContent");
-          CKEDITOR.instances.blogContent.setData(content);
-        })
-        .catch(error => {
-          alert("Failed to load data: " + error.message);
-          CKEDITOR.replace("blogContent");
-          CKEDITOR.instances.blogContent.setData("<p>Start writing your blog content here...</p>");
-        });
+      CKEDITOR.replace("blogContent");
+      database.ref("siteData").once("value").then(snapshot => {
+        const data = snapshot.val();
+        document.getElementById("meetingLink").value = data?.meetingLink || "";
+        CKEDITOR.instances.blogContent.setData(data?.blogContent || "");
+      });
     }
   </script>
 </body>
 </html>
-
