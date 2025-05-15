@@ -1,70 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Admin Panel</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #1c1c1c;
-      color: #eee;
-      padding: 20px;
-    }
-    input, button {
-      padding: 10px;
-      margin-top: 10px;
-      width: 100%;
-      font-size: 16px;
-      border: none;
-      border-radius: 4px;
-    }
-    #login, #panel {
-      max-width: 400px;
-      margin: auto;
-    }
-    button {
-      background-color: #00ff88;
-      color: #000;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin Panel - Edit Blog & Meeting</title>
+<style>
+  body {
+    background: #222;
+    color: #eee;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  #loginDiv, #adminDiv {
+    max-width: 700px;
+    margin: auto;
+  }
+  input[type="password"], input[type="text"], textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0 15px 0;
+    font-size: 16px;
+    border-radius: 5px;
+    border: none;
+    font-family: monospace;
+  }
+  textarea {
+    height: 300px;
+    resize: vertical;
+  }
+  button {
+    background-color: #00ff88;
+    color: #000;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  button:hover {
+    background-color: #00cc66;
+  }
+  #message, #saveMessage {
+    margin-top: 10px;
+  }
+</style>
 </head>
 <body>
-  <div id="login">
-    <h2>Admin Login</h2>
-    <input type="password" id="adminPass" placeholder="Enter admin password" />
-    <button onclick="checkPassword()">Login</button>
-    <p id="loginError" style="color: red;"></p>
-  </div>
 
-  <div id="panel" style="display: none;">
-    <h2>Edit Meeting Link</h2>
-    <input type="text" id="meetingInput" placeholder="Enter new meeting URL" />
-    <button onclick="updateMeeting()">Save</button>
-    <p id="saveMsg" style="color: #00ff88;"></p>
-  </div>
+<div id="loginDiv">
+  <h2>Admin Login</h2>
+  <input type="password" id="passwordInput" placeholder="Enter Password" />
+  <button onclick="checkPassword()">Login</button>
+  <div id="message"></div>
+</div>
 
-  <script>
-    const correctPassword = "admin123"; // Change this if needed
+<div id="adminDiv" style="display:none;">
+  <h2>Edit Blog Content (HTML)</h2>
+  <textarea id="blogContentInput" spellcheck="false"></textarea>
+  
+  <h2>Update Meeting Link</h2>
+  <input type="text" id="meetingLinkInput" placeholder="Paste full meeting URL here" />
+  
+  <button onclick="saveAll()">Save Changes</button>
+  <div id="saveMessage"></div>
+</div>
 
-    function checkPassword() {
-      const input = document.getElementById("adminPass").value;
-      if (input === correctPassword) {
-        document.getElementById("login").style.display = "none";
-        document.getElementById("panel").style.display = "block";
-        document.getElementById("meetingInput").value = localStorage.getItem("meetingLink") || "";
-      } else {
-        document.getElementById("loginError").textContent = "Incorrect password.";
-      }
-    }
+<script>
+const adminPassword = "admin123"; // Change this password as needed
 
-    function updateMeeting() {
-      const newLink = document.getElementById("meetingInput").value.trim();
-      if (newLink) {
-        localStorage.setItem("meetingLink", newLink);
-        document.getElementById("saveMsg").textContent = "Meeting link updated.";
-      }
-    }
-  </script>
+function checkPassword() {
+  const entered = document.getElementById("passwordInput").value.trim();
+  const message = document.getElementById("message");
+  if (entered === adminPassword) {
+    message.textContent = "";
+    document.getElementById("loginDiv").style.display = "none";
+    document.getElementById("adminDiv").style.display = "block";
+    loadData();
+  } else {
+    message.textContent = "Incorrect password!";
+    message.style.color = "red";
+  }
+}
+
+function loadData() {
+  // Load blog content and meeting link from localStorage if available
+  const savedBlog = localStorage.getItem("blogContent");
+  if (savedBlog) {
+    document.getElementById("blogContentInput").value = savedBlog;
+  } else {
+    document.getElementById("blogContentInput").value = "<p>Enter your blog HTML content here...</p>";
+  }
+
+  const savedLink = localStorage.getItem("meetingLink") || "";
+  document.getElementById("meetingLinkInput").value = savedLink;
+}
+
+function saveAll() {
+  const blogContent = document.getElementById("blogContentInput").value.trim();
+  const meetingLink = document.getElementById("meetingLinkInput").value.trim();
+  
+  if (!meetingLink.startsWith("https://")) {
+    alert("Meeting link must start with https://");
+    return;
+  }
+  if (!blogContent) {
+    alert("Blog content cannot be empty");
+    return;
+  }
+  
+  localStorage.setItem("blogContent", blogContent);
+  localStorage.setItem("meetingLink", meetingLink);
+  
+  const msg = document.getElementById("saveMessage");
+  msg.textContent = "Blog content and meeting link saved successfully!";
+  msg.style.color = "#00ff88";
+}
+</script>
+
 </body>
 </html>
