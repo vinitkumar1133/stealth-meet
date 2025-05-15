@@ -1,89 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Blog</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #121212;
-    color: #eee;
-    margin: 0;
-    padding: 20px;
-    user-select: none;
-  }
-  .content {
-    max-width: 700px;
-    margin: auto;
-    line-height: 1.5;
-  }
-  #meetContainer {
-    display: none;
-    position: fixed;
-    top: 100px;
-    left: 100px;
-    width: 480px;
-    height: 320px;
-    border: 2px solid #555;
-    border-radius: 8px;
-    background: #000;
-    box-shadow: 0 0 12px #00ff88aa;
-    z-index: 9999;
-    cursor: move;
-    overflow: hidden;
-  }
-  #meetContainer iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
-    pointer-events: auto;
-  }
-  #disableButton {
-    cursor: pointer;
-    font-size: 24px;
-    float: right;
-    margin-bottom: 10px;
-    user-select: none;
-  }
-  #toggleIcon {
-    cursor: pointer;
-    font-size: 24px;
-    float: right;
-    margin-bottom: 10px;
-    user-select: none;
-    margin-right: 10px;
-  }
-  #resizeHandle {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background: #00ff88;
-    bottom: 0;
-    right: 0;
-    cursor: se-resize;
-    border-top-left-radius: 8px;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blog</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #eee;
+      margin: 0;
+      padding: 20px;
+      user-select: none;
+    }
+    .content {
+      max-width: 700px;
+      margin: auto;
+      line-height: 1.5;
+    }
+    #meetContainer {
+      display: none;
+      position: fixed;
+      top: 100px;
+      left: 100px;
+      min-width: 300px;
+      min-height: 200px;
+      border: 2px solid #555;
+      border-radius: 8px;
+      background: #000;
+      box-shadow: 0 0 12px #00ff88aa;
+      z-index: 9999;
+      cursor: move;
+      overflow: hidden;
+      resize: both;
+    }
+    #meetContainer iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      pointer-events: auto;
+    }
+    #disableButton, #toggleIcon {
+      cursor: pointer;
+      font-size: 24px;
+      float: right;
+      margin-bottom: 10px;
+      user-select: none;
+      margin-right: 10px;
+    }
+  </style>
 </head>
 <body>
-<div class="content">
-  <span id="disableButton" title="Disable Call Access">&#128683;</span>
-  <span id="toggleIcon" title="Toggle Call">&#9998;</span>
-  <div id="blogContent"></div>
-</div>
+<div class="content" id="blogContent"></div>
+<span id="disableButton" title="Disable Call Access">&#128683;</span>
+<span id="toggleIcon" title="Toggle Call">&#9998;</span>
 <div id="meetContainer">
-  <iframe id="meetFrame" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
-  <div id="resizeHandle"></div>
+  <iframe id="meetIframe" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
 </div>
 <script>
 const meetContainer = document.getElementById('meetContainer');
 const toggleIcon = document.getElementById('toggleIcon');
 const disableButton = document.getElementById('disableButton');
-const resizeHandle = document.getElementById('resizeHandle');
-const meetFrame = document.getElementById('meetFrame');
+const blogContent = document.getElementById('blogContent');
+const meetIframe = document.getElementById('meetIframe');
+
 let callAccessDisabled = false;
+
+// Load saved content and link
+const savedContent = localStorage.getItem('blogContent');
+const savedLink = localStorage.getItem('meetLink');
+if (savedContent) blogContent.innerHTML = savedContent;
+if (savedLink) meetIframe.src = savedLink;
 
 function toggleMeet(show) {
   if (callAccessDisabled) return;
@@ -91,6 +79,7 @@ function toggleMeet(show) {
 }
 
 function leaveMeet() {
+  meetIframe.src = '';
   meetContainer.style.display = 'none';
 }
 
@@ -103,7 +92,12 @@ function disableCallAccess() {
 }
 
 toggleIcon.addEventListener('click', () => {
-  toggleMeet(meetContainer.style.display !== 'block');
+  if (meetContainer.style.display === 'block') {
+    toggleMeet(false);
+  } else {
+    toggleMeet(true);
+    if (savedLink && !meetIframe.src) meetIframe.src = savedLink;
+  }
 });
 
 disableButton.addEventListener('click', disableCallAccess);
@@ -116,16 +110,22 @@ document.addEventListener('keydown', (e) => {
   else if (e.altKey && e.key.toLowerCase() === 'a') disableCallAccess();
 });
 
+document.addEventListener('click', (e) => {
+  if (!meetContainer.contains(e.target) && meetContainer.style.display === 'block') {
+    toggleMeet(false);
+  }
+});
+
+// Drag logic
 let isDragging = false, dragStartX, dragStartY, startLeft, startTop;
 meetContainer.addEventListener('mousedown', (e) => {
-  if (e.target === resizeHandle) return;
+  if (e.target !== meetContainer) return;
   isDragging = true;
   dragStartX = e.clientX;
   dragStartY = e.clientY;
   const rect = meetContainer.getBoundingClientRect();
   startLeft = rect.left;
   startTop = rect.top;
-  meetContainer.style.cursor = 'grabbing';
   e.preventDefault();
 });
 
@@ -148,46 +148,8 @@ document.addEventListener('mousemove', (e) => {
 });
 
 document.addEventListener('mouseup', () => {
-  isDragging = false;
-  meetContainer.style.cursor = 'move';
+  if (isDragging) isDragging = false;
 });
-
-let isResizing = false, resizeStartX, resizeStartY, startWidth, startHeight;
-resizeHandle.addEventListener('mousedown', (e) => {
-  isResizing = true;
-  resizeStartX = e.clientX;
-  resizeStartY = e.clientY;
-  startWidth = meetContainer.offsetWidth;
-  startHeight = meetContainer.offsetHeight;
-  e.preventDefault();
-  e.stopPropagation();
-});
-
-document.addEventListener('mousemove', (e) => {
-  if (!isResizing) return;
-  let dx = e.clientX - resizeStartX;
-  let dy = e.clientY - resizeStartY;
-  let newWidth = startWidth + dx;
-  let newHeight = startHeight + dy;
-  if (newWidth < 300) newWidth = 300;
-  if (newHeight < 200) newHeight = 200;
-  const winWidth = window.innerWidth;
-  const winHeight = window.innerHeight;
-  if (newWidth > winWidth - meetContainer.offsetLeft) newWidth = winWidth - meetContainer.offsetLeft;
-  if (newHeight > winHeight - meetContainer.offsetTop) newHeight = winHeight - meetContainer.offsetTop;
-  meetContainer.style.width = newWidth + 'px';
-  meetContainer.style.height = newHeight + 'px';
-});
-
-document.addEventListener('mouseup', () => {
-  isResizing = false;
-});
-
-// Load from localStorage
-const savedContent = localStorage.getItem('blogContent');
-const savedMeetLink = localStorage.getItem('meetLink');
-if (savedContent) document.getElementById('blogContent').innerHTML = savedContent;
-if (savedMeetLink) meetFrame.src = savedMeetLink;
 </script>
 </body>
 </html>
