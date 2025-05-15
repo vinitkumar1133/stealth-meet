@@ -1,121 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Admin Panel - Edit Blog & Meeting</title>
-<style>
-  body {
-    background: #222;
-    color: #eee;
-    font-family: Arial, sans-serif;
-    padding: 20px;
-  }
-  #loginDiv, #adminDiv {
-    max-width: 700px;
-    margin: auto;
-  }
-  input[type="password"], input[type="text"], textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0 15px 0;
-    font-size: 16px;
-    border-radius: 5px;
-    border: none;
-    font-family: monospace;
-  }
-  textarea {
-    height: 300px;
-    resize: vertical;
-  }
-  button {
-    background-color: #00ff88;
-    color: #000;
-    border: none;
-    padding: 10px 15px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 5px;
-  }
-  button:hover {
-    background-color: #00cc66;
-  }
-  #message, #saveMessage {
-    margin-top: 10px;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <script src="https://cdn.ckeditor.com/4.21.0/standard/ckeditor.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1e1e1e;
+      color: #eee;
+      padding: 20px;
+    }
+    .panel {
+      max-width: 800px;
+      margin: auto;
+      background-color: #2e2e2e;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 12px #00ff88aa;
+    }
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #00ff88;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #editor-container {
+      margin-bottom: 15px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
+  <div class="panel">
+    <h2>Admin Panel</h2>
+    <div id="login">
+      <input type="password" id="adminPassword" placeholder="Enter Admin Password" />
+      <button onclick="checkPassword()">Login</button>
+    </div>
 
-<div id="loginDiv">
-  <h2>Admin Login</h2>
-  <input type="password" id="passwordInput" placeholder="Enter Password" />
-  <button onclick="checkPassword()">Login</button>
-  <div id="message"></div>
-</div>
+    <div id="editorPanel" class="hidden">
+      <label for="meetingLink">Meeting Link:</label>
+      <input type="text" id="meetingLink" />
 
-<div id="adminDiv" style="display:none;">
-  <h2>Edit Blog Content (HTML)</h2>
-  <textarea id="blogContentInput" spellcheck="false"></textarea>
-  
-  <h2>Update Meeting Link</h2>
-  <input type="text" id="meetingLinkInput" placeholder="Paste full meeting URL here" />
-  
-  <button onclick="saveAll()">Save Changes</button>
-  <div id="saveMessage"></div>
-</div>
+      <label for="blogContent">Blog Content:</label>
+      <textarea id="blogContent"></textarea>
 
-<script>
-const adminPassword = "admin123"; // Change this password as needed
+      <button onclick="saveData()">Save Changes</button>
+    </div>
+  </div>
 
-function checkPassword() {
-  const entered = document.getElementById("passwordInput").value.trim();
-  const message = document.getElementById("message");
-  if (entered === adminPassword) {
-    message.textContent = "";
-    document.getElementById("loginDiv").style.display = "none";
-    document.getElementById("adminDiv").style.display = "block";
-    loadData();
-  } else {
-    message.textContent = "Incorrect password!";
-    message.style.color = "red";
-  }
-}
+  <script>
+    const PASSWORD = "admin123"; // Change this to your preferred password
 
-function loadData() {
-  // Load blog content and meeting link from localStorage if available
-  const savedBlog = localStorage.getItem("blogContent");
-  if (savedBlog) {
-    document.getElementById("blogContentInput").value = savedBlog;
-  } else {
-    document.getElementById("blogContentInput").value = "<p>Enter your blog HTML content here...</p>";
-  }
+    function checkPassword() {
+      const input = document.getElementById("adminPassword").value;
+      if (input === PASSWORD) {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("editorPanel").classList.remove("hidden");
+        loadData();
+      } else {
+        alert("Incorrect password!");
+      }
+    }
 
-  const savedLink = localStorage.getItem("meetingLink") || "";
-  document.getElementById("meetingLinkInput").value = savedLink;
-}
+    function saveData() {
+      const meetingLink = document.getElementById("meetingLink").value;
+      const blogContent = CKEDITOR.instances.blogContent.getData();
+      localStorage.setItem("meetingLink", meetingLink);
+      localStorage.setItem("blogContent", blogContent);
+      alert("Changes saved!");
+    }
 
-function saveAll() {
-  const blogContent = document.getElementById("blogContentInput").value.trim();
-  const meetingLink = document.getElementById("meetingLinkInput").value.trim();
-  
-  if (!meetingLink.startsWith("https://")) {
-    alert("Meeting link must start with https://");
-    return;
-  }
-  if (!blogContent) {
-    alert("Blog content cannot be empty");
-    return;
-  }
-  
-  localStorage.setItem("blogContent", blogContent);
-  localStorage.setItem("meetingLink", meetingLink);
-  
-  const msg = document.getElementById("saveMessage");
-  msg.textContent = "Blog content and meeting link saved successfully!";
-  msg.style.color = "#00ff88";
-}
-</script>
-
+    function loadData() {
+      document.getElementById("meetingLink").value = localStorage.getItem("meetingLink") || "";
+      const content = localStorage.getItem("blogContent") || "<p>Start writing your blog content here...</p>";
+      CKEDITOR.replace("blogContent");
+      CKEDITOR.instances.blogContent.setData(content);
+    }
+  </script>
 </body>
 </html>
